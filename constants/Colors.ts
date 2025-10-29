@@ -1,26 +1,98 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Professional theme colors for RK Doors app
+ * White, Black, and Minimal Blue color scheme
  */
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+const tintColorLight = '#2563eb';
+const tintColorDark = '#2563eb';
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    text: '#1f2937',
+    background: '#ffffff',
+    tint: '#2563eb',
+    icon: '#6b7280',
+    tabIconDefault: '#9ca3af',
+    tabIconSelected: '#2563eb',
+    cardBackground: '#f8fafc',
+    border: '#e2e8f0',
+    success: '#10b981',
+    error: '#ef4444',
+    warning: '#f59e0b',
+    primary: '#2563eb',
+    secondary: '#1f2937',
+    accent: '#dbeafe',
+    muted: '#f1f5f9',
+    // Professional theme colors
+    white: '#ffffff',
+    black: '#000000',
+    blue: {
+      50: '#eff6ff',
+      100: '#dbeafe',
+      200: '#bfdbfe',
+      300: '#93c5fd',
+      400: '#60a5fa',
+      500: '#3b82f6',
+      600: '#2563eb',
+      700: '#1d4ed8',
+      800: '#1e40af',
+      900: '#1e3a8a',
+    },
+    gray: {
+      50: '#f9fafb',
+      100: '#f3f4f6',
+      200: '#e5e7eb',
+      300: '#d1d5db',
+      400: '#9ca3af',
+      500: '#6b7280',
+      600: '#4b5563',
+      700: '#374151',
+      800: '#1f2937',
+      900: '#111827',
+    },
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    text: '#f9fafb',
+    background: '#000000',
+    tint: '#2563eb',
+    icon: '#9ca3af',
+    tabIconDefault: '#6b7280',
+    tabIconSelected: '#2563eb',
+    cardBackground: '#111827',
+    border: '#374151',
+    success: '#10b981',
+    error: '#ef4444',
+    warning: '#f59e0b',
+    primary: '#2563eb',
+    secondary: '#f9fafb',
+    accent: '#1e3a8a',
+    muted: '#1f2937',
+    // Professional theme colors
+    white: '#ffffff',
+    black: '#000000',
+    blue: {
+      50: '#eff6ff',
+      100: '#dbeafe',
+      200: '#bfdbfe',
+      300: '#93c5fd',
+      400: '#60a5fa',
+      500: '#3b82f6',
+      600: '#2563eb',
+      700: '#1d4ed8',
+      800: '#1e40af',
+      900: '#1e3a8a',
+    },
+    gray: {
+      50: '#f9fafb',
+      100: '#f3f4f6',
+      200: '#e5e7eb',
+      300: '#d1d5db',
+      400: '#9ca3af',
+      500: '#6b7280',
+      600: '#4b5563',
+      700: '#374151',
+      800: '#1f2937',
+      900: '#111827',
+    },
   },
 };
