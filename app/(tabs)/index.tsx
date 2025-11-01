@@ -14,7 +14,7 @@ import {
 import DoorCard from '../../components/DoorCard';
 import { Colors } from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
-import { doors } from '../../data/doors';
+import { useDoors } from '../../contexts/DoorsContext';
 import { useColorScheme } from '../../hooks/useColorScheme';
 
 export default function HomeScreen() {
@@ -23,6 +23,7 @@ export default function HomeScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const colorScheme = useColorScheme();
+  const { doors, loading, error } = useDoors();
 
   const filteredDoors = doors.filter(door =>
     door.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -184,7 +185,17 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        {filteredDoors.length === 0 && searchQuery ? (
+        {loading ? (
+          <View style={styles.noResults}>
+            <Ionicons name="hourglass" size={48} color={Colors.light.icon} />
+            <Text style={[styles.noResultsText, { color: Colors.light.icon }]}>Loading products…</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.noResults}>
+            <Ionicons name="alert-circle" size={48} color={Colors.light.icon} />
+            <Text style={[styles.noResultsText, { color: Colors.light.icon }]}>Failed to load. Pull to refresh.</Text>
+          </View>
+        ) : filteredDoors.length === 0 && searchQuery ? (
           <View style={styles.noResults}>
             <Ionicons
               name="search"

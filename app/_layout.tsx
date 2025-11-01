@@ -10,6 +10,7 @@ import SplashScreen from '@/components/SplashScreen';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { OrdersProvider } from '@/contexts/OrdersContext';
+import { DoorsProvider } from '@/contexts/DoorsContext';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -53,10 +54,12 @@ export default function RootLayout() {
       <AuthProvider>
         <CartProvider>
           <OrdersProvider>
-            <ThemeProvider value={DefaultTheme}>
-              <AppContent />
-              <StatusBar style="dark" />
-            </ThemeProvider>
+            <DoorsProvider>
+              <ThemeProvider value={DefaultTheme}>
+                <AppContent />
+                <StatusBar style="dark" />
+              </ThemeProvider>
+            </DoorsProvider>
           </OrdersProvider>
         </CartProvider>
       </AuthProvider>

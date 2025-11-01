@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { Order, useOrders } from '../../contexts/OrdersContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useColorScheme } from '../../hooks/useColorScheme';
 
 const getStatusColor = (status: Order['status'], colors: any) => {
@@ -51,7 +52,8 @@ const getStatusIcon = (status: Order['status']) => {
 };
 
 export default function OrdersScreen() {
-  const { orders, loading, updateOrderStatus } = useOrders();
+  const { orders, loading, updateOrderStatus, getUserOrders } = useOrders();
+  const { user } = useAuth();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -172,6 +174,8 @@ export default function OrdersScreen() {
     </View>
   );
 
+  const userOrders = user?.uid ? getUserOrders(user.uid) : [];
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
@@ -180,15 +184,15 @@ export default function OrdersScreen() {
       <View style={[styles.header, { borderBottomColor: colors.gray[200] }]}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>My Orders</Text>
         <Text style={[styles.headerSubtitle, { color: colors.gray[600] }]}>
-          {orders.length} order{orders.length !== 1 ? 's' : ''}
+          {userOrders.length} order{userOrders.length !== 1 ? 's' : ''}
         </Text>
       </View>
 
-      {orders.length === 0 ? (
+      {userOrders.length === 0 ? (
         renderEmptyState()
       ) : (
         <FlatList
-          data={orders}
+          data={userOrders}
           renderItem={renderOrderItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}

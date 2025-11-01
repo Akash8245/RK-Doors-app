@@ -11,14 +11,15 @@ import {
 } from 'react-native';
 import DoorCard from '../../components/DoorCard';
 import { Colors } from '../../constants/Colors';
-import { categories, getDoorsByCategory } from '../../data/doors';
+import { useDoors } from '../../contexts/DoorsContext';
 import { useColorScheme } from '../../hooks/useColorScheme';
 
 export default function CategoryScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const colorScheme = useColorScheme();
+  const { categories, getDoorsByCategoryName } = useDoors();
 
-  const filteredDoors = selectedCategory ? getDoorsByCategory(selectedCategory) : [];
+  const filteredDoors = selectedCategory ? getDoorsByCategoryName(selectedCategory) : [];
 
   const renderCategoryCard = ({ item }: { item: any }) => (
     <TouchableOpacity
@@ -35,8 +36,8 @@ export default function CategoryScreen() {
       <Text style={[styles.categoryName, { color: Colors[colorScheme ?? 'light'].text }]}>
         {item.name}
       </Text>
-      <Text style={[styles.categoryCount, { color: Colors[colorScheme ?? 'light'].icon }]}>
-        {getDoorsByCategory(item.name).length} doors
+      <Text style={[styles.categoryCount, { color: Colors[colorScheme ?? 'light'].icon }]}> 
+        {getDoorsByCategoryName(item.name).length} doors
       </Text>
     </TouchableOpacity>
   );

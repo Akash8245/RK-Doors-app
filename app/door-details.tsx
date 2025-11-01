@@ -20,7 +20,7 @@ import { Colors } from '../constants/Colors';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useOrders } from '../contexts/OrdersContext';
-import { doors } from '../data/doors';
+import { useDoors } from '../contexts/DoorsContext';
 import { useColorScheme } from '../hooks/useColorScheme';
 
 const { width, height } = Dimensions.get('window');
@@ -65,6 +65,7 @@ export default function DoorDetailsScreen() {
   const { user } = useAuth();
   const { addToCart } = useCart();
   const { addOrder } = useOrders();
+  const { getDoorById } = useDoors();
 
   const [selectedWidth, setSelectedWidth] = useState<string>('');
   const [selectedHeight, setSelectedHeight] = useState<string>('');
@@ -76,7 +77,7 @@ export default function DoorDetailsScreen() {
   const [state, setState] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
-  const door = doors.find(d => d.id === doorId);
+  const door = typeof doorId === 'string' ? getDoorById(doorId) : undefined;
 
   if (!door) {
     return (
