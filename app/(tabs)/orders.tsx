@@ -12,6 +12,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/Colors';
 import { Order, useOrders } from '../../contexts/OrdersContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -58,6 +59,7 @@ export default function OrdersScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const [refreshing, setRefreshing] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -177,7 +179,7 @@ export default function OrdersScreen() {
   const userOrders = user?.uid ? getUserOrders(user.uid) : [];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       
       {/* Header */}
@@ -202,7 +204,7 @@ export default function OrdersScreen() {
           }
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 

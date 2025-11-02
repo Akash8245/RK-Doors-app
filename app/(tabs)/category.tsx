@@ -9,6 +9,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DoorCard from '../../components/DoorCard';
 import { Colors } from '../../constants/Colors';
 import { useDoors } from '../../contexts/DoorsContext';
@@ -18,6 +19,7 @@ export default function CategoryScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const colorScheme = useColorScheme();
   const { categories, getDoorsByCategoryName } = useDoors();
+  const insets = useSafeAreaInsets();
 
   const filteredDoors = selectedCategory ? getDoorsByCategoryName(selectedCategory) : [];
 
@@ -43,7 +45,7 @@ export default function CategoryScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
+    <View style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background, paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: Colors[colorScheme ?? 'light'].text }]}>
           Categories
@@ -100,7 +102,7 @@ export default function CategoryScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+    Alert,
     SafeAreaView,
     ScrollView,
     StatusBar,
@@ -11,6 +12,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DoorCard from '../../components/DoorCard';
 import { Colors } from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
@@ -24,18 +26,33 @@ export default function HomeScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const { doors, loading, error } = useDoors();
+  const insets = useSafeAreaInsets();
 
   const filteredDoors = doors.filter(door =>
     door.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleLogout = async () => {
-    try {
-      await logout();
-      router.push('/auth');
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          onPress: async () => {
+            try {
+              await logout();
+              router.replace('/auth');
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Failed to logout. Please try again.');
+              console.error('Logout failed:', error);
+            }
+          },
+          style: 'destructive',
+        },
+      ]
+    );
   };
 
   const handleProfilePress = () => {
@@ -165,7 +182,7 @@ export default function HomeScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: Colors.light.background }]}>
+    <View style={[styles.container, { backgroundColor: Colors.light.background, paddingTop: insets.top }]}>
       <StatusBar 
         barStyle="dark-content" 
         backgroundColor={Colors.light.background}
@@ -218,7 +235,7 @@ export default function HomeScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

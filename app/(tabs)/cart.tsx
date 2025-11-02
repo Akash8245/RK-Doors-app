@@ -20,6 +20,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useOrders } from '../../contexts/OrdersContext';
 import { useColorScheme } from '../../hooks/useColorScheme';
+import { generateAndDownloadPDF } from '../../utils/pdfGenerator';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function CartScreen() {
   const { user } = useAuth();
@@ -28,6 +30,7 @@ export default function CartScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const insets = useSafeAreaInsets();
 
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
@@ -35,6 +38,35 @@ export default function CartScreen() {
   const [pincode, setPincode] = useState('');
   const [state, setState] = useState('');
   const [loading, setLoading] = useState(false);
+  const [generatingPDF, setGeneratingPDF] = useState(false);
+
+  const handleCreateEstimate = async () => {
+    if (cartItems.length === 0) {
+      Alert.alert('Empty Cart', 'Please add items to cart before creating an estimate');
+      return;
+    }
+
+    setGeneratingPDF(true);
+
+    try {
+      // Use user's display name or email as client name
+      const clientName = user?.displayName || user?.email?.split('@')[0] || 'Customer';
+      await generateAndDownloadPDF(cartItems, clientName);
+      Alert.alert(
+        'Estimate Generated!',
+        'Your estimate PDF has been generated successfully. You can now share or save it.',
+        [{ text: 'OK' }]
+      );
+    } catch (error: any) {
+      Alert.alert(
+        'Estimate Generated',
+        error.message || 'Your estimate PDF has been generated. You can find it in your files.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setGeneratingPDF(false);
+    }
+  };
 
   const handlePlaceOrder = async () => {
     if (!name.trim() || !address.trim() || !phoneNumber.trim() || !pincode.trim() || !state.trim()) {
@@ -136,7 +168,7 @@ export default function CartScreen() {
 
   if (cartItems.length === 0) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
         <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
         <View style={[styles.header, { borderBottomColor: colors.gray[200] }]}>
           <Text style={[styles.title, { color: colors.text }]}>
@@ -158,12 +190,12 @@ export default function CartScreen() {
             Add some beautiful doors to your cart
           </Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <View style={[styles.header, { borderBottomColor: colors.gray[200] }]}>
         <Text style={[styles.title, { color: colors.text }]}>
@@ -303,22 +335,15 @@ export default function CartScreen() {
             </Text>
           </View>
           
-          <View style={styles.buttonContainer}>
+          <View style={styles.actionButtonContainer}>
             <TouchableOpacity
-              style={[styles.clearButton, { borderColor: colors.gray[300] }]}
-              onPress={() => {
-                Alert.alert(
-                  'Clear Cart',
-                  'Are you sure you want to clear your cart?',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    { text: 'Clear', onPress: clearCart, style: 'destructive' },
-                  ]
-                );
-              }}
+              style={[styles.estimateButton, { backgroundColor: colors.gray[700], borderColor: colors.gray[600] }]}
+              onPress={handleCreateEstimate}
+              disabled={generatingPDF || cartItems.length === 0}
             >
-              <Text style={[styles.clearButtonText, { color: colors.gray[600] }]}>
-                Clear Cart
+              <Ionicons name="document-text-outline" size={18} color={colors.white} style={{ marginRight: 8 }} />
+              <Text style={[styles.estimateButtonText, { color: colors.white }]}>
+                {generatingPDF ? 'Generating...' : 'Create Estimate'}
               </Text>
             </TouchableOpacity>
             
@@ -334,7 +359,7 @@ export default function CartScreen() {
           </View>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -491,6 +516,12 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     gap: 12,
+    marginTop: 8,
+  },
+  actionButtonContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 0,
   },
   clearButton: {
     flex: 1,
@@ -504,12 +535,26 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   placeOrderButton: {
-    flex: 2,
+    flex: 1,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   placeOrderButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  estimateButton: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  estimateButtonText: {
     fontSize: 16,
     fontWeight: '600',
   },

@@ -12,6 +12,14 @@ import { CartProvider } from '@/contexts/CartContext';
 import { OrdersProvider } from '@/contexts/OrdersContext';
 import { DoorsProvider } from '@/contexts/DoorsContext';
 
+// Conditionally import expo-screen-capture
+let ScreenCapture: typeof import('expo-screen-capture') | null = null;
+try {
+  ScreenCapture = require('expo-screen-capture');
+} catch (error) {
+  console.warn('expo-screen-capture not available, using native Android implementation only');
+}
+
 function AppContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -44,6 +52,30 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
+
+  // Prevent screenshots and screen recording throughout the app
+  useEffect(() => {
+    const preventScreenshot = async () => {
+      if (ScreenCapture) {
+        try {
+          await ScreenCapture.preventScreenCaptureAsync();
+        } catch (error) {
+          console.warn('Failed to prevent screen capture:', error);
+        }
+      }
+      // Note: Android native implementation in MainActivity.kt already prevents screenshots
+    };
+
+    preventScreenshot();
+
+    // Return a cleanup function that will be called if needed
+    return () => {
+      // Optionally, you could allow screenshots again when the app is backgrounded
+      // if (ScreenCapture) {
+      //   ScreenCapture.allowScreenCaptureAsync();
+      // }
+    };
+  }, []);
 
   if (!loaded) {
     return <SplashScreen onFinish={() => {}} />;

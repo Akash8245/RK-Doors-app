@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   imageContainer: {
-    height: 300,
+    height: 450,
     backgroundColor: '#f8f9fa',
   },
   doorImage: {

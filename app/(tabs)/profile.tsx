@@ -10,6 +10,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/Colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { useColorScheme } from '../../hooks/useColorScheme';
@@ -18,6 +19,7 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const colorScheme = useColorScheme();
+  const insets = useSafeAreaInsets();
 
   const handleLogout = async () => {
     Alert.alert(
@@ -30,8 +32,9 @@ export default function ProfileScreen() {
           onPress: async () => {
             try {
               await logout();
-              router.push('/auth');
-            } catch (error) {
+              router.replace('/auth');
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Failed to logout. Please try again.');
               console.error('Logout failed:', error);
             }
           },
@@ -75,7 +78,7 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
+    <View style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background, paddingTop: insets.top }]}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -162,7 +165,7 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
