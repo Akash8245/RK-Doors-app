@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+    Alert,
     FlatList,
     RefreshControl,
     SafeAreaView,
@@ -13,6 +14,8 @@ import {
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ref, remove } from 'firebase/database';
+import { database } from '../../firebase/config';
 import { Colors } from '../../constants/Colors';
 import { Order, useOrders } from '../../contexts/OrdersContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -53,13 +56,35 @@ const getStatusIcon = (status: Order['status']) => {
 };
 
 export default function OrdersScreen() {
-  const { orders, loading, updateOrderStatus, getUserOrders } = useOrders();
+  const { orders, loading, updateOrderStatus, getUserOrders, cancelOrder } = useOrders();
   const { user } = useAuth();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const [refreshing, setRefreshing] = useState(false);
   const insets = useSafeAreaInsets();
+
+  const handleDeleteOrder = (orderId: string) => {
+    Alert.alert(
+      'Delete Order',
+      'Are you sure you want to delete this order? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const orderRef = ref(database, `orders/${orderId}`);
+              await remove(orderRef);
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Failed to delete order. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -147,16 +172,23 @@ export default function OrdersScreen() {
         </View>
       </View>
 
-      {item.status === 'pending' && (
-        <View style={styles.actionButtons}>
+      <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={[styles.deleteButton, { backgroundColor: colors.error }]}
+          onPress={() => handleDeleteOrder(item.id)}
+        >
+          <Ionicons name="trash-outline" size={16} color={colors.white} style={{ marginRight: 4 }} />
+          <Text style={[styles.deleteButtonText, { color: colors.white }]}>Delete</Text>
+        </TouchableOpacity>
+        {item.status === 'pending' && (
           <TouchableOpacity
-            style={[styles.cancelButton, { borderColor: colors.error }]}
+            style={[styles.cancelButton, { borderColor: colors.warning }]}
             onPress={() => updateOrderStatus(item.id, 'cancelled')}
           >
-            <Text style={[styles.cancelButtonText, { color: colors.error }]}>Cancel Order</Text>
+            <Text style={[styles.cancelButtonText, { color: colors.warning }]}>Cancel Order</Text>
           </TouchableOpacity>
-        </View>
-      )}
+        )}
+      </View>
     </TouchableOpacity>
   );
 
@@ -218,12 +250,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '600',
   },
   headerSubtitle: {
-    fontSize: 14,
-    marginTop: 4,
+    fontSize: 13,
+    marginTop: 3,
   },
   listContainer: {
     padding: 20,
@@ -249,12 +281,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   orderId: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: 3,
   },
   orderDate: {
-    fontSize: 14,
+    fontSize: 12,
   },
   statusBadge: {
     flexDirection: 'row',
@@ -309,13 +341,26 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   deliveryText: {
-    fontSize: 14,
+    fontSize: 12,
     marginLeft: 8,
     flex: 1,
   },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
+    gap: 8,
+    marginTop: 8,
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  deleteButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   cancelButton: {
     paddingHorizontal: 16,
@@ -324,7 +369,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   cancelButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
   emptyState: {

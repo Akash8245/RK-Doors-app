@@ -6,6 +6,7 @@ import {
     Alert,
     Dimensions,
     KeyboardAvoidingView,
+    Modal,
     Platform,
     SafeAreaView,
     ScrollView,
@@ -16,6 +17,13 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { GestureHandlerRootView, PinchGestureHandler } from 'react-native-gesture-handler';
+import Animated, {
+    useAnimatedGestureHandler,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+} from 'react-native-reanimated';
 import { Colors } from '../constants/Colors';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
@@ -76,8 +84,49 @@ export default function DoorDetailsScreen() {
   const [pincode, setPincode] = useState<string>('');
   const [state, setState] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [imageZoomVisible, setImageZoomVisible] = useState(false);
+  const scale = useSharedValue(1);
+  const savedScale = useSharedValue(1);
 
   const door = typeof doorId === 'string' ? getDoorById(doorId) : undefined;
+
+  const pinchHandler = useAnimatedGestureHandler({
+    onStart: (_, ctx: any) => {
+      ctx.startScale = savedScale.value;
+    },
+    onActive: (event, ctx) => {
+      scale.value = ctx.startScale * event.scale;
+    },
+    onEnd: () => {
+      if (scale.value < 1) {
+        scale.value = withSpring(1);
+        savedScale.value = 1;
+      } else if (scale.value > 3) {
+        scale.value = withSpring(3);
+        savedScale.value = 3;
+      } else {
+        savedScale.value = scale.value;
+      }
+    },
+  });
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
+
+  const handleImagePress = () => {
+    setImageZoomVisible(true);
+    scale.value = 1;
+    savedScale.value = 1;
+  };
+
+  const handleCloseZoom = () => {
+    setImageZoomVisible(false);
+    scale.value = 1;
+    savedScale.value = 1;
+  };
 
   if (!door) {
     return (
@@ -213,13 +262,45 @@ export default function DoorDetailsScreen() {
       >
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {/* Door Image */}
-          <View style={styles.imageContainer}>
+          <TouchableOpacity 
+            style={styles.imageContainer}
+            onPress={handleImagePress}
+            activeOpacity={0.9}
+          >
             <Image
               source={door.image}
               style={styles.doorImage}
               contentFit="cover"
             />
-          </View>
+          </TouchableOpacity>
+
+          {/* Image Zoom Modal */}
+          <Modal
+            visible={imageZoomVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={handleCloseZoom}
+          >
+            <View style={styles.zoomModal}>
+              <TouchableOpacity 
+                style={styles.zoomCloseButton}
+                onPress={handleCloseZoom}
+              >
+                <Ionicons name="close" size={28} color={colors.white} />
+              </TouchableOpacity>
+              <GestureHandlerRootView style={styles.zoomContainer}>
+                <PinchGestureHandler onGestureEvent={pinchHandler}>
+                  <Animated.View style={[styles.zoomImageContainer, animatedStyle]}>
+                    <Image
+                      source={door.image}
+                      style={styles.zoomImage}
+                      contentFit="contain"
+                    />
+                  </Animated.View>
+                </PinchGestureHandler>
+              </GestureHandlerRootView>
+            </View>
+          </Modal>
 
           {/* Door Info */}
           <View style={[styles.infoContainer, { backgroundColor: colors.white }]}>
@@ -402,10 +483,42 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   imageContainer: {
-    height: 450,
+    height: 400,
     backgroundColor: '#f8f9fa',
+    position: 'relative',
   },
   doorImage: {
+    width: '100%',
+    height: '100%',
+  },
+  zoomModal: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  zoomCloseButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
+    padding: 8,
+  },
+  zoomContainer: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  zoomImageContainer: {
+    width: width,
+    height: height * 0.8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  zoomImage: {
     width: '100%',
     height: '100%',
   },
@@ -416,43 +529,43 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
   },
   doorName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 6,
   },
   doorCategory: {
-    fontSize: 16,
-    marginBottom: 8,
+    fontSize: 13,
+    marginBottom: 6,
   },
   doorPrice: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 10,
   },
   doorDescription: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 13,
+    lineHeight: 20,
   },
   sizesContainer: {
     marginTop: 20,
     padding: 20,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 13,
+    fontWeight: '600',
     marginBottom: 8,
   },
   sectionSubtitle: {
-    fontSize: 14,
-    marginBottom: 20,
+    fontSize: 11,
+    marginBottom: 12,
   },
   sizeSection: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   sizeTitle: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   sizeOptions: {
     flexDirection: 'row',
@@ -468,20 +581,20 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   sizeOptionText: {
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: '500',
   },
   customerContainer: {
-    marginTop: 20,
-    padding: 20,
+    marginTop: 16,
+    padding: 16,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 14,
   },
   inputLabel: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   row: {
     flexDirection: 'row',
@@ -489,9 +602,9 @@ const styles = StyleSheet.create({
   textInput: {
     borderWidth: 1,
     borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
     textAlignVertical: 'top',
   },
   actionButtons: {
@@ -507,17 +620,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addToCartText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   buyNowButton: {
     flex: 1,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
   },
   buyNowText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   errorContainer: {

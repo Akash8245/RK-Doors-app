@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import { Image } from 'expo-image';
+import { useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
-    FlatList,
-    SafeAreaView,
+    Dimensions,
     ScrollView,
     StyleSheet,
     Text,
@@ -15,34 +16,33 @@ import { Colors } from '../../constants/Colors';
 import { useDoors } from '../../contexts/DoorsContext';
 import { useColorScheme } from '../../hooks/useColorScheme';
 
+const { width } = Dimensions.get('window');
+
 export default function CategoryScreen() {
+  const { categoryName } = useLocalSearchParams();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const colorScheme = useColorScheme();
   const { categories, getDoorsByCategoryName } = useDoors();
   const insets = useSafeAreaInsets();
 
+  useEffect(() => {
+    if (categoryName && typeof categoryName === 'string') {
+      setSelectedCategory(categoryName);
+    }
+  }, [categoryName]);
+
   const filteredDoors = selectedCategory ? getDoorsByCategoryName(selectedCategory) : [];
 
-  const renderCategoryCard = ({ item }: { item: any }) => (
-    <TouchableOpacity
-      style={[
-        styles.categoryCard,
-        {
-          backgroundColor: Colors[colorScheme ?? 'light'].background,
-          borderColor: selectedCategory === item.name ? Colors[colorScheme ?? 'light'].tint : '#E1E5E9',
-        },
-      ]}
-      onPress={() => setSelectedCategory(selectedCategory === item.name ? null : item.name)}
-    >
-      <Text style={styles.categoryIcon}>{item.icon}</Text>
-      <Text style={[styles.categoryName, { color: Colors[colorScheme ?? 'light'].text }]}>
-        {item.name}
-      </Text>
-      <Text style={[styles.categoryCount, { color: Colors[colorScheme ?? 'light'].icon }]}> 
-        {getDoorsByCategoryName(item.name).length} doors
-      </Text>
-    </TouchableOpacity>
-  );
+  // Get category cards with first door image
+  const categoryCards = categories.map(category => {
+    const categoryDoors = getDoorsByCategoryName(category.name);
+    const firstDoor = categoryDoors[0];
+    return {
+      ...category,
+      firstDoorImage: firstDoor?.image || null,
+      doorCount: categoryDoors.length,
+    };
+  });
 
   return (
     <View style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background, paddingTop: insets.top }]}>
@@ -60,14 +60,47 @@ export default function CategoryScreen() {
           <Text style={[styles.sectionTitle, { color: Colors[colorScheme ?? 'light'].text }]}>
             Door Categories
           </Text>
-          <FlatList
-            data={categories}
-            renderItem={renderCategoryCard}
-            keyExtractor={(item) => item.id}
-            numColumns={2}
-            columnWrapperStyle={styles.categoryRow}
-            scrollEnabled={false}
-          />
+          <View style={styles.categoriesGrid}>
+            {categoryCards.map((category) => (
+              <TouchableOpacity
+                key={category.id}
+                style={[
+                  styles.categoryCard,
+                  {
+                    backgroundColor: selectedCategory === category.name ? Colors[colorScheme ?? 'light'].tint : Colors[colorScheme ?? 'light'].cardBackground,
+                    borderColor: selectedCategory === category.name ? Colors[colorScheme ?? 'light'].tint : Colors[colorScheme ?? 'light'].border,
+                  },
+                ]}
+                onPress={() => setSelectedCategory(selectedCategory === category.name ? null : category.name)}
+                activeOpacity={0.7}
+              >
+                {category.firstDoorImage && (
+                  <Image
+                    source={category.firstDoorImage}
+                    style={styles.categoryImage}
+                    contentFit="cover"
+                  />
+                )}
+                <Text
+                  style={[
+                    styles.categoryName,
+                    {
+                      color: selectedCategory === category.name ? Colors[colorScheme ?? 'light'].background : Colors[colorScheme ?? 'light'].text,
+                      fontWeight: selectedCategory === category.name ? 'bold' : 'normal',
+                    },
+                  ]}
+                  numberOfLines={2}
+                >
+                  {category.name}
+                </Text>
+                {category.doorCount > 0 && (
+                  <Text style={[styles.categoryCount, { color: selectedCategory === category.name ? Colors[colorScheme ?? 'light'].background : Colors[colorScheme ?? 'light'].icon }]}>
+                    {category.doorCount} doors
+                  </Text>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         {selectedCategory && (
@@ -115,73 +148,79 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 11,
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
   },
   categoriesSection: {
-    marginBottom: 32,
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 24,
+    fontSize: 13,
     fontWeight: '600',
-    marginBottom: 16,
+    marginBottom: 10,
   },
-  categoryRow: {
+  categoriesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
+    marginBottom: 8,
   },
   categoryCard: {
-    width: '48%',
-    padding: 20,
-    borderRadius: 16,
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 2,
+    width: (width - 48) / 4,
+    borderRadius: 8,
+    marginBottom: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 1,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  categoryIcon: {
-    fontSize: 32,
-    marginBottom: 12,
+  categoryImage: {
+    width: '100%',
+    height: 80,
   },
   categoryName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontSize: 11,
+    fontWeight: '500',
+    paddingHorizontal: 6,
+    paddingTop: 6,
+    paddingBottom: 4,
     textAlign: 'center',
   },
   categoryCount: {
-    fontSize: 12,
+    fontSize: 9,
+    paddingHorizontal: 6,
+    paddingBottom: 6,
     textAlign: 'center',
   },
   doorsSection: {
-    marginBottom: 32,
+    marginBottom: 20,
   },
   doorsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   doorsTitle: {
-    fontSize: 24,
+    fontSize: 13,
     fontWeight: '600',
   },
   doorsCount: {
-    fontSize: 14,
+    fontSize: 11,
   },
   doorsGrid: {
     flexDirection: 'row',
@@ -199,8 +238,8 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   placeholderText: {
-    fontSize: 16,
+    fontSize: 13,
     textAlign: 'center',
     opacity: 0.7,
   },
-}); 
+});

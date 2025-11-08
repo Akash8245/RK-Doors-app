@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
     Alert,
+    Dimensions,
     SafeAreaView,
     ScrollView,
     StatusBar,
@@ -19,18 +21,37 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useDoors } from '../../contexts/DoorsContext';
 import { useColorScheme } from '../../hooks/useColorScheme';
 
+const { width } = Dimensions.get('window');
+
 export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showMenu, setShowMenu] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const { user, logout } = useAuth();
   const router = useRouter();
   const colorScheme = useColorScheme();
-  const { doors, loading, error } = useDoors();
+  const { doors, loading, error, categories, getDoorsByCategoryName } = useDoors();
   const insets = useSafeAreaInsets();
 
-  const filteredDoors = doors.filter(door =>
+  // Get first 8 categories in order, with first door image from each
+  const categoryCards = categories.slice(0, 8).map(category => {
+    const categoryDoors = getDoorsByCategoryName(category.name);
+    const firstDoor = categoryDoors[0];
+    return {
+      ...category,
+      firstDoorImage: firstDoor?.image || null,
+      doorCount: categoryDoors.length,
+    };
+  });
+
+  // Filter doors by search query and selected category
+  let filteredDoors = doors.filter(door =>
     door.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
+  if (selectedCategory) {
+    filteredDoors = filteredDoors.filter(door => door.category === selectedCategory);
+  }
 
   const handleLogout = async () => {
     Alert.alert(
@@ -73,12 +94,11 @@ export default function HomeScreen() {
       </TouchableOpacity>
       
       <View style={styles.headerContent}>
-        <Text style={[styles.welcomeText, { color: Colors.light.text }]}>
-          Welcome to
-        </Text>
-        <Text style={[styles.brandText, { color: Colors.light.tint }]}>
-          RK Doors
-        </Text>
+        <Image
+          source={require('../../assets/images/main-blue.png')}
+          style={styles.logo}
+          contentFit="contain"
+        />
       </View>
 
       <TouchableOpacity style={styles.profileButton} onPress={handleProfilePress}>
@@ -193,13 +213,59 @@ export default function HomeScreen() {
       {renderSideMenu()}
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Categories Section */}
+        {!searchQuery && categoryCards.length > 0 && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: Colors.light.text }]}>
+              Categories
+            </Text>
+            <View style={styles.categoriesGrid}>
+              {categoryCards.map((category) => (
+                <TouchableOpacity
+                  key={category.id}
+                  style={[styles.categoryCard, { backgroundColor: Colors.light.cardBackground }]}
+                  onPress={() => {
+                    setSelectedCategory(category.name);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  {category.firstDoorImage && (
+                    <Image
+                      source={category.firstDoorImage}
+                      style={styles.categoryImage}
+                      contentFit="cover"
+                    />
+                  )}
+                  <Text style={[styles.categoryName, { color: Colors.light.text }]} numberOfLines={2}>
+                    {category.name}
+                  </Text>
+                  {category.doorCount > 0 && (
+                    <Text style={[styles.categoryCount, { color: Colors.light.icon }]}>
+                      {category.doorCount} doors
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: Colors.light.text }]}>
-            {searchQuery ? `Search Results (${filteredDoors.length})` : 'Featured Doors'}
-          </Text>
-          <Text style={[styles.sectionSubtitle, { color: Colors.light.icon }]}>
-            {searchQuery ? `Results for "${searchQuery}"` : 'Discover our handcrafted collection'}
-          </Text>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: Colors.light.text }]}>
+              {selectedCategory ? selectedCategory : searchQuery ? `Search Results (${filteredDoors.length})` : 'Recommended'}
+            </Text>
+            {selectedCategory && (
+              <TouchableOpacity onPress={() => setSelectedCategory(null)}>
+                <Ionicons name="close-circle" size={18} color={Colors.light.icon} />
+              </TouchableOpacity>
+            )}
+          </View>
+          {!searchQuery && !selectedCategory && (
+            <Text style={[styles.sectionSubtitle, { color: Colors.light.icon }]}>
+              Discover our handcrafted collection
+            </Text>
+          )}
         </View>
 
         {loading ? (
@@ -256,14 +322,11 @@ const styles = StyleSheet.create({
   headerContent: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  welcomeText: {
-    fontSize: 14,
-    opacity: 0.8,
-  },
-  brandText: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  logo: {
+    width: 120,
+    height: 32,
   },
   profileButton: {
     padding: 8,
@@ -275,18 +338,18 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     borderWidth: 1,
     borderColor: Colors.light.border,
   },
   searchIcon: {
-    marginRight: 12,
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14,
   },
   sideMenu: {
     position: 'absolute',
@@ -342,15 +405,60 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
   sectionTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '600',
     marginBottom: 8,
   },
   sectionSubtitle: {
-    fontSize: 16,
+    fontSize: 11,
+    marginBottom: 8,
+  },
+  categoriesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  categoryCard: {
+    width: (width - 48) / 4,
+    borderRadius: 8,
+    marginBottom: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  categoryImage: {
+    width: '100%',
+    height: 80,
+  },
+  categoryName: {
+    fontSize: 11,
+    fontWeight: '500',
+    paddingHorizontal: 6,
+    paddingTop: 6,
+    paddingBottom: 4,
+    textAlign: 'center',
+  },
+  categoryCount: {
+    fontSize: 9,
+    paddingHorizontal: 6,
+    paddingBottom: 6,
+    textAlign: 'center',
   },
   doorsGrid: {
     flexDirection: 'row',
@@ -368,13 +476,13 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   noResultsTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 6,
     textAlign: 'center',
   },
   noResultsText: {
-    fontSize: 16,
+    fontSize: 13,
     textAlign: 'center',
     opacity: 0.7,
   },

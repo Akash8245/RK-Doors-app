@@ -58,22 +58,22 @@ export default function DoorCard({ door }: DoorCardProps) {
 const styles = StyleSheet.create({
   card: {
     width: (width - 48) / 2,
-    borderRadius: 16,
-    marginBottom: 16,
+    borderRadius: 12,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 1,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   image: {
     width: '100%',
-    height: 200,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    height: 180,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
   },
   content: {
     padding: 12,
